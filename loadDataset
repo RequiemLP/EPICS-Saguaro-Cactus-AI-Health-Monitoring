@@ -1,0 +1,38 @@
+# This file contains the code to set dataset_base_path, required for model training and validation
+# User's drive must be imported prior to running this, see googleDriveImport for more information
+
+import pandas as pd
+import os
+
+dataset_base_path = '/content/drive/MyDrive/health_dataset'
+
+# Initialize lists to store data
+image_paths = []
+labels = []
+
+# Iterate through 'train' and 'val' splits
+for split in ['train', 'val']:
+    split_path = os.path.join(dataset_base_path, split)
+    if not os.path.exists(split_path):
+        print(f"Skipping {split_path} as it does not exist.")
+        continue
+
+    # Iterate through class directories
+    for class_name in os.listdir(split_path):
+        class_path = os.path.join(split_path, class_name)
+        if os.path.isdir(class_path):
+            # Iterate through image files in each class directory
+            for img_name in os.listdir(class_path):
+                # Filter for common image extensions
+                if img_name.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff', '.webp')):
+                    image_paths.append(os.path.join(class_path, img_name))
+                    labels.append(class_name)
+
+# Create a pandas DataFrame
+health_dataset = pd.DataFrame({
+    'image_path': image_paths,
+    'health': labels
+})
+
+print("Dataset loaded successfully into 'health_dataset' DataFrame.")
+display(health_dataset.head())
