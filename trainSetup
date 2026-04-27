@@ -1,0 +1,59 @@
+# Sets up the training environment with YOLOv8 cls model
+
+import os
+import json
+import pandas as pd
+import re
+!pip install ultralytics
+!pip install scikit-learn
+import ultralytics
+ultralytics.checks()
+from ultralytics import YOLO
+model = YOLO("yolov8s-cls.pt")
+
+# Define the YAML content as a multiline string
+yaml_content = """path: /content/drive/MyDrive/health_dataset
+
+train: train
+val: val
+
+names:
+  0: Healthy
+  1: Likely to survive
+  2: Poor condition
+  3: Unlikely to survive
+  4: Dead
+"""
+
+yaml_file_path = "/content/drive/MyDrive/health_dataset/data.yaml"
+
+# Ensure the directory exists before writing the file
+os.makedirs(os.path.dirname(yaml_file_path), exist_ok=True)
+
+# Write the YAML content to the file using standard Python file operations
+with open(yaml_file_path, "w") as f:
+    f.write(yaml_content)
+
+print(f"YAML file written to: {yaml_file_path}")
+
+# Assuming the dataset is already unzipped and present in /content/drive/MyDrive/health_dataset
+print(f"Listing contents of /content/drive/MyDrive/health_dataset/train:")
+!ls -l /content/drive/MyDrive/health_dataset/train
+
+# NOTE: Everything after this line is used to train or collect results from the specified model
+# For instance, the following lines display the number of entries in each health status folder and percent
+
+counts = health_dataset["health"].value_counts()
+percent = health_dataset["health"].value_counts(normalize=True) * 100
+
+print(pd.concat([counts, percent], axis=1, keys=["count", "percent"]))
+
+# To train YOLOv8 with the dataset
+
+# model.train(
+#    data=os.path.dirname(yaml_file_path),
+#    epochs=10,        # short test smaller images
+#    batch=32,         # faster if supported
+#    patience=5,
+#    device='cpu' # Changed to 'cpu' as no GPU is available
+#)
