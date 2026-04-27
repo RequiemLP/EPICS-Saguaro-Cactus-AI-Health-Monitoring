@@ -1,0 +1,31 @@
+# This file contains the code to run if the health_dataset folder is saved to the user's drive
+# Imports the user's drive from Colab so health_dataset can be accessed and tested
+
+from google.colab import drive
+import os
+
+# Forcefully remove and recreate the /content/drive directory to ensure it's empty
+print("Ensuring /content/drive is an empty directory...")
+!rm -rf /content/drive
+!mkdir /content/drive
+print("/content/drive is now an empty directory.")
+
+# Mount Google Drive
+print("Mounting Google Drive...")
+drive.mount('/content/drive', force_remount=True)
+print("Google Drive mounted.")
+
+# Define the path to the dataset directory in Google Drive
+dataset_path = "/content/drive/MyDrive/health_dataset"
+
+# Check if the dataset directory exists
+if os.path.exists(dataset_path):
+    print(f"Dataset directory found at: '{dataset_path}'")
+else:
+    print(f"Error: Dataset directory not found at '{dataset_path}'. Please ensure the 'health_dataset' folder is uploaded to your Google Drive and the path is correct.")
+
+# Verify the contents of the dataset directory
+print(f"Listing contents of {dataset_path}:")
+!ls -l "{dataset_path}"
+print(f"Listing contents of {dataset_path}/train (if exists):")
+!ls -l "{dataset_path}/train"
