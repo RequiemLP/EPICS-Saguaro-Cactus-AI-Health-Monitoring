@@ -1,64 +1,60 @@
 # This file is for installing all the images off the GIS map with unique names
-# The ArcGIS map has two FeatureLayers, run this code using both layers to extract all attachments from the app
-# FeatureLayer0: https://services7.arcgis.com/9eZEJPkTbLUNpjCU/arcgis/rest/services/Saguaro_Status__v6_2_Public_view/FeatureServer/0
-# FeatureLayer2: https://services7.arcgis.com/9eZEJPkTbLUNpjCU/arcgis/rest/services/Saguaro_Status__v6_2_Public_view/FeatureServer/2
-# Modify line 26 to extract all attachments of a certain health status (Healthy, likely to survive, dead, etc.) 
+# To filter attachments, modify lines 29 and 40 with the proper health status (Healthy, likely to survive, dead, etc.)
 
 from arcgis.features import FeatureLayer
 import os
 import shutil
 
-layer_url = "YOUR_FEATURE_LAYER_URL"
+# put BOTH layer URLs here
+layer_urls = [
+    "https://services7.arcgis.com/9eZEJPkTbLUNpjCU/arcgis/rest/services/Saguaro_Status__v6_2_Public_view/FeatureServer/0",
+    "https://services7.arcgis.com/9eZEJPkTbLUNpjCU/arcgis/rest/services/Saguaro_Status__v6_2_Public_view/FeatureServer/2"
+]
 
-layer = FeatureLayer(layer_url)
-
-base_folder = "saguaro_photos"
+base_folder = "all_saguaro_photos"
 os.makedirs(base_folder, exist_ok=True)
 
-batch_size = 2000
-offset = 0
+for i, url in enumerate(layer_urls):
 
-while True:
+    print(f"\nProcessing Layer {i+1}")
 
-    print(f"Querying records {offset} to {offset + batch_size}")
+    layer = FeatureLayer(url)
 
-    features = layer.query(
-        where="Visual IS NOT NULL",
-        result_record_count=batch_size,
-        result_offset=offset
-    )
+    batch_size = layer.properties.maxRecordCount
+    offset = 0
 
-    if len(features) == 0:
-        break
+    while True:
 
-    for f in features:
+        features = layer.query(
+            where="Visual IS NOT NULL",
+            result_record_count=batch_size,
+            result_offset=offset
+        )
 
-        oid = f.attributes["OBJECTID"]
-        status = f.attributes["Visual"]
+        if len(features) == 0:
+            break
 
-        if status is None:
-            status = "Unknown"
+        for f in features:
 
-        folder_name = status.replace(" ", "_")
-        folder_path = os.path.join(base_folder, folder_name)
+            oid = f.attributes["OBJECTID"]
+            status = f.attributes.get("Visual", "Unknown")
 
-        os.makedirs(folder_path, exist_ok=True)
+            attachments = layer.attachments.get_list(oid)
 
-        attachments = layer.attachments.get_list(oid)
+            for att in attachments:
 
-        for att in attachments:
+                att_id = att["id"]
+                original_name = att["name"]
 
-            att_id = att["id"]
-            original_name = att["name"]
+                # include layer index to avoid collisions
+                new_name = f"layer{i+1}_saguaro_{oid}_att{att_id}_{original_name}"
 
-            new_name = f"saguaro_{oid}_att{att_id}_{original_name}"
+                path = layer.attachments.download(oid, att_id)
 
-            path = layer.attachments.download(oid, att_id)
+                new_path = os.path.join(base_folder, new_name)
 
-            new_path = os.path.join(folder_path, new_name)
+                shutil.move(path[0], new_path)
 
-            shutil.move(path[0], new_path)
+                print("Saved:", new_name)
 
-            print("Saved:", new_name)
-
-    offset += batch_size
+        offset += batch_size
