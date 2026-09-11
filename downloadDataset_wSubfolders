@@ -1,0 +1,65 @@
+!pip install arcgis
+from arcgis.features import FeatureLayer
+import os
+import shutil
+
+# put BOTH layer URLs here
+layer_urls = [
+    "https://services7.arcgis.com/9eZEJPkTbLUNpjCU/arcgis/rest/services/Saguaro_Status__v6_2_Public_view/FeatureServer/0",
+    "https://services7.arcgis.com/9eZEJPkTbLUNpjCU/arcgis/rest/services/Saguaro_Status__v6_2_Public_view/FeatureServer/2"
+]
+
+base_folder = "all_saguaro_photos"
+os.makedirs(base_folder, exist_ok=True)
+
+for i, url in enumerate(layer_urls):
+
+    print(f"\nProcessing Layer {i+1}")
+
+    layer = FeatureLayer(url)
+
+    batch_size = layer.properties.maxRecordCount
+    offset = 0
+
+    while True:
+
+        features = layer.query(
+            where="Visual IS NOT NULL",
+            result_record_count=batch_size,
+            result_offset=offset
+        )
+
+        if len(features) == 0:
+            break
+
+        for f in features:
+
+            oid = f.attributes["OBJECTID"]
+            status = f.attributes.get("Visual", "Unknown")
+
+            if status is None:
+                status = "Unknown"
+
+            folder_name = status.replace(" ", "_")
+            folder_path = os.path.join(base_folder, folder_name)
+
+            os.makedirs(folder_path, exist_ok=True)
+
+            attachments = layer.attachments.get_list(oid)
+
+            for att in attachments:
+
+                att_id = att["id"]
+                original_name = att["name"]
+
+                new_name = f"layer{i+1}_saguaro_{oid}_att{att_id}_{original_name}"
+
+                path = layer.attachments.download(oid, att_id)
+
+                new_path = os.path.join(folder_path, new_name)
+
+                shutil.move(path[0], new_path)
+
+                print("Saved:", new_name)
+
+        offset += batch_size
