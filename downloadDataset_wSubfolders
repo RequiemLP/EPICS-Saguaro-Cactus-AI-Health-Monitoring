@@ -9,7 +9,7 @@ layer_urls = [
     "https://services7.arcgis.com/9eZEJPkTbLUNpjCU/arcgis/rest/services/Saguaro_Status__v6_2_Public_view/FeatureServer/2"
 ]
 
-base_folder = "all_saguaro_photos"
+base_folder = "health_dataset"
 os.makedirs(base_folder, exist_ok=True)
 
 for i, url in enumerate(layer_urls):
