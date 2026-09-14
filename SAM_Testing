@@ -1,0 +1,161 @@
+====================================================
+SAGUARO AI HEALTH MONITORING — SAM TESTING GUIDE
+====================================================
+Written by: Afriha
+Purpose: Test SAM (Segment Anything Model) on saguaro cactus images
+         to verify it can isolate the cactus from the background.
+
+----------------------------------------------------
+WHAT WE ARE TESTING
+----------------------------------------------------
+We are checking if SAM can look at a photo of a saguaro and
+correctly outline just the cactus — ignoring the background,
+shrubs, sky, etc.
+
+A good result = the blue mask covers the cactus body and not
+much else. A bad result = it misses big chunks of the cactus
+or includes a lot of background.
+
+Please note down what you observe after each test.
+
+----------------------------------------------------
+STEP 1: INSTALL PYTHON
+----------------------------------------------------
+If you don't have Python installed:
+1. Go to https://www.python.org/downloads/
+2. Download the latest version for your computer
+3. During install, CHECK the box that says "Add Python to PATH"
+4. Click Install Now
+
+To verify it worked, open Command Prompt
+and type:
+    python --version
+
+You should see something like: Python 3.11.x
+If not, remove Python and reinstall it and make sure to add it to your PATH 
+----------------------------------------------------
+STEP 2: INSTALL REQUIRED PACKAGES
+----------------------------------------------------
+Open Command Prompt and run these one at a time:
+
+    pip install torch
+    pip install ultralytics
+
+These will take a few minutes to download. 
+
+----------------------------------------------------
+STEP 3: SET UP YOUR FILES
+----------------------------------------------------
+1. Create a folder on your Desktop called: EPICS_SAM_Test or whatever you want just for the sake of easy replication use what I used 
+2. Save your cactus image inside that folder
+   - Name it: testing.png again you can change the naming 
+   - Use a clear photo of a single saguaro cactus
+   - JPG or PNG both work, just update the file extension in the
+     script if needed
+
+----------------------------------------------------
+STEP 4: CREATE THE SCRIPT
+----------------------------------------------------
+1. Open Notepad or VS Code, if you have it. For VS Code open it to the EPCIS_SAM_Testing folder and do the following 
+2. Copy and paste the following code exactly:
+
+------ COPY FROM HERE ------
+
+from ultralytics import SAM
+
+print("Loading model... (first time will download weights, be patient)")
+model = SAM("sam2_b.pt")
+print("Model loaded!")
+
+image_path = r"C:\Users\YOUR_USERNAME\Desktop\EPICS_SAM_Test\testing.png"
+
+print("Running SAM on image...")
+results = model(image_path, points=[350, 350], labels=[1])
+print("Done! Showing result...")
+
+results[0].show()
+print("Finished!")
+
+------ COPY TO HERE ------
+
+3. IMPORTANT: Replace YOUR_USERNAME with your actual Windows/Mac
+   username in the image_path line. For example if your name
+   is Bob it would be:
+   r"C:\Users\Bob\Desktop\EPICS_SAM_Test\testing.png"
+
+4. Save the file as: SAM_testing.py
+   - In Notepad, go File > Save As
+   - Change "Save as type" to "All Files"
+   - Name it SAM_testing.py
+   - Save it inside your EPICS_SAM_Test folder
+
+NOTE: If you didn't name your folder or image the same name as I did, you change it on the image_path 
+----------------------------------------------------
+STEP 5: RUN THE SCRIPT
+----------------------------------------------------
+1. Open Command Prompt
+2. Navigate to your folder by typing:
+       cd Desktop\EPICS_SAM_Test
+3. Run the script:
+       python SAM_testing.py
+Or if there is another way, please feel free to use it! 
+
+First time running: it will download the SAM2 model weights
+automatically. This is a large file, just let it run.
+
+A window should pop up showing your cactus image with a blue
+mask overlay on it. There will also be a confidence score
+shown (e.g. 0.97 = 97% confident).
+
+----------------------------------------------------
+STEP 6: WHAT TO RECORD
+----------------------------------------------------
+After each image test, write down:
+
+- Image description (e.g. "overcast day,lighting is bad")
+- Confidence score shown (the number next to the blue box)
+- Did the mask cover the full cactus? (Yes / Mostly / No)
+- Did the mask include background? (None / A little / A lot)
+- Any other notes (e.g. "missed the arms", "caught nearby shrub")
+
+----------------------------------------------------
+TROUBLESHOOTING
+----------------------------------------------------
+"No such file or directory" error:
+  -> Double check your image_path username and filename are correct
+
+"SyntaxError: unicode error" error:
+  -> Make sure you have the r before the quotes in image_path
+     It should look like: r"C:\Users\..."
+
+Script runs but no window appears:
+  -> Try adding this at the very end of the script:
+     input("Press Enter to exit...")
+     This keeps the window open
+
+pip is not recognized:
+  -> Python was not added to PATH during install
+  -> Reinstall Python and check the "Add to PATH" box
+
+If any other question, you can ask me or use any AI for troubleshooting!
+
+----------------------------------------------------
+NOTES
+----------------------------------------------------
+- The point [350, 350] is a coordinate in the middle of the
+  image that tells SAM where to look. If your cactus is not
+  centered, you may need to adjust this.
+- x=0 is the LEFT edge of the image
+- y=0 is the TOP edge of the image
+- So [350, 350] means 350 pixels from the left, 350 from the top
+
+HOW TO FIND THE RIGHT COORDINATES FOR YOUR IMAGE:
+1. Open your cactus image in Paint (search in Start menu)
+2. Hover your mouse over the middle of the cactus trunk
+3. Look at the bottom of the Paint window — it shows the
+   coordinates of your cursor, e.g. "347, 512px"
+4. Use those two numbers in the script:
+       results = model(image_path, points=[347, 512], labels=[1])
+5. Pick a point clearly on the trunk, not on the arms or edges
+Or again just put it into GEMINI or CHAT and it for coordinates
+====================================================
