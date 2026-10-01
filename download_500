@@ -1,0 +1,53 @@
+import random
+import os
+import shutil
+from arcgis.features import FeatureLayer
+
+layer_urls = [
+    "https://services7.arcgis.com/9eZEJPkTbLUNpjCU/arcgis/rest/services/Saguaro_Status__v6_2_Public_view/FeatureServer/0",
+    "https://services7.arcgis.com/9eZEJPkTbLUNpjCU/arcgis/rest/services/Saguaro_Status__v6_2_Public_view/FeatureServer/2"
+]
+
+base_folder = "saguaro_sample"
+os.makedirs(base_folder, exist_ok=True)
+
+all_features = []
+
+# first collect all features
+for i, url in enumerate(layer_urls):
+    print(f"Fetching feature list from layer {i+1}...")
+    layer = FeatureLayer(url)
+    batch_size = layer.properties.maxRecordCount
+    offset = 0
+
+    while True:
+        features = layer.query(
+            where="Visual IS NOT NULL",
+            result_record_count=batch_size,
+            result_offset=offset
+        )
+        if len(features) == 0:
+            break
+        for f in features:
+            all_features.append((i, url, f.attributes["OBJECTID"]))
+        offset += batch_size
+
+print(f"Total features found: {len(all_features)}")
+
+# randomly pick 500
+sample = random.sample(all_features, min(500, len(all_features)))
+print(f"Downloading {len(sample)} random images...")
+
+for i, url, oid in sample:
+    layer = FeatureLayer(url)
+    attachments = layer.attachments.get_list(oid)
+    for att in attachments:
+        att_id = att["id"]
+        original_name = att["name"]
+        new_name = f"layer{i+1}_saguaro_{oid}_att{att_id}_{original_name}"
+        path = layer.attachments.download(oid, att_id)
+        new_path = os.path.join(base_folder, new_name)
+        shutil.move(path[0], new_path)
+        print("Saved:", new_name)
+
+print("Done!")
