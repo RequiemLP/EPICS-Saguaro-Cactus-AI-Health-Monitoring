@@ -1,0 +1,20 @@
+from ultralytics import YOLO
+from ultralytics import SAM 
+
+sam = SAM("C:/Users/safri/Desktop/Python_Projects/EPICS/sam2_b.pt")  # use your new SAM model's filename
+model = YOLO("C:/Users/safri/Desktop/Python_Projects/EPICS/best.pt")   # use model's filename you downloaded in HuggingFace YOLO_26
+results = model("C:\\Users\\safri\\Desktop\\Python_Projects\\EPICS\\testing.png", conf=0.75, device="cpu") # Testing image
+results[0].show() 
+boxes = results[0].boxes.xyxy.tolist()
+print(boxes)
+
+def box_area(box):
+    x1, y1, x2, y2 = box
+    area = (x2 - x1) * (y2 - y1)
+    return area
+
+biggest_box = max(boxes, key=box_area)
+print(biggest_box)
+
+result = sam("C:\\Users\\safri\\Desktop\\Python_Projects\\EPICS\\testing.png", bboxes=[biggest_box], device="cpu") 
+result[0].show()
